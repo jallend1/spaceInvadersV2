@@ -5,13 +5,18 @@ const KEY_CODE_RIGHT = 39;
 const KEY_CODE_SPACE = 32;
 const PLAYER_WIDTH = 20;
 const PLAYER_MAX_SPEED = 500;
+const LASER_MAX_SPEED = 300;
+const LASER_COOLDOWN = 0.1;
+
 const GAME_STATE = {
     lastTime: Date.now(),
     playerX: 0, 
     playerY:0,
     leftPressed: false,
     rightPressed: false,
-    spacePressed: false
+    spacePressed: false,
+    playerCooldown: 0,
+    lasers: []
 }
 
 function setPosition($el, x, y){
@@ -27,6 +32,18 @@ function clamp(v, min, max){
     else{
         return v;
     }
+}
+
+function createLaser($container, x, y){
+    const $element = document.createElement('img');
+    $element.src = 'img/laser-blue-1.png';
+    $element.className = 'laser';
+    $container.appendChild($element);
+    const laser = { x, y, $element };
+    GAME_STATE.lasers.push(laser);
+    setPosition($element, x, y);
+    const audio = new Audio('sound/sfx-laser1.ogg');
+    audio.play()
 }
 
 function createPlayer($container){
@@ -62,17 +79,44 @@ function onKeyUp(e){
 function update(){
     const currentTime = Date.now();
     const dt = (currentTime - GAME_STATE.lastTime) / 1000;
-    updatePlayer(dt);
+    const $container = document.querySelector('.game')
+    updatePlayer(dt, $container);
+    updateLasers(dt, $container);
     GAME_STATE.lastTime = currentTime;
     window.requestAnimationFrame(update);
 }
 
-function updatePlayer(dt){
+function updateLasers(dt, $container){
+    const lasers = GAME_STATE.lasers;
+    for (let i = 0; i < lasers.length; i++){
+        const laser = lasers[i];
+        laser.y -= dt * LASER_MAX_SPEED;
+        if(laser.y < 0){
+            destroyLaser($container, laser);
+        }
+        setPosition(laser.$element, laser.x, laser.y);
+    }
+    GAME_STATE.lasers = GAME_STATE.lasers.filter(e => !e.isDead);
+}
+
+function destroyLaser($container, laser){
+    $container.removeChild(laser.$element);
+    laser.isDead = true;
+}
+
+function updatePlayer(dt, $container){
     if(GAME_STATE.leftPressed === true){
         GAME_STATE.playerX -= dt * PLAYER_MAX_SPEED;
     }
     if(GAME_STATE.rightPressed === true){
         GAME_STATE.playerX += dt * PLAYER_MAX_SPEED;
+    }
+    if(GAME_STATE.spacePressed === true && GAME_STATE.playerCooldown <= 0){
+        createLaser($container, GAME_STATE.playerX, GAME_STATE.playerY);
+        GAME_STATE.playerCooldown = LASER_COOLDOWN;
+    }
+    if (GAME_STATE.playerCooldown > 0){
+        GAME_STATE.playerCooldown -= dt;
     }
     const $player = document.querySelector('.player');
     GAME_STATE.playerX = clamp(GAME_STATE.playerX, PLAYER_WIDTH, GAME_WIDTH - PLAYER_WIDTH);
