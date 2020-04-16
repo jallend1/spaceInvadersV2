@@ -6,6 +6,12 @@ const playerHeight = 30;
 const maxSpeed = 500;
 const laserSpeed = 5;
 const coolDown = 0.1;
+let enemyStep = 0;
+let direction = 1;
+
+const enemyWidth = 100;
+const enemyNum = 10;
+const enemySpacing = (width - enemyWidth * 2) / (enemyNum - 1);
 
 const gameState = {
     playerX: width / 2,
@@ -14,6 +20,7 @@ const gameState = {
     rightPressed: false,
     spacePressed: false,
     lasers: [],
+    enemies: [],
     lastTime: Date.now(),
     coolDown: coolDown
 }
@@ -23,6 +30,18 @@ function checkBoundaries(){                                                     
         gameState.playerX = playerWidth;
     }else if(gameState.playerX > width - playerWidth){
         gameState.playerX = width - playerWidth;
+    }
+}
+function createEnemies(){
+    for(let i = 0; i < enemyNum ; i++){
+        const $newEnemy = document.createElement('img');
+        $newEnemy.src = 'img/enemy-green-1.png'
+        $newEnemy.classList.add('enemy');
+        $game.appendChild($newEnemy);
+        let x = i * enemySpacing + enemyWidth;
+        const enemy = {x, y: 50, $el: $newEnemy}
+        setPosition($newEnemy, x, 50)
+        gameState.enemies.push(enemy);
     }
 }
 
@@ -87,8 +106,23 @@ function update(){
     checkBoundaries();
     setPosition($player, gameState.playerX, gameState.playerY);
     updateLasers();
+    updateEnemies();
     gameState.lastTime = currentTime;
     requestAnimationFrame(update);
+}
+
+function updateEnemies(){
+    for(let i = 0; i < gameState.enemies.length; i++){
+        gameState.enemies[i].x += direction;
+    }
+    gameState.enemies.forEach(enemy => {
+        if(enemy.x > (width - enemyWidth) || enemy.x < enemyWidth){
+            direction = -direction;
+        }
+        else{
+            setPosition(enemy.$el, enemy.x, enemy.y)
+        }
+    })
 }
 
 function updateLasers(){
@@ -108,6 +142,7 @@ function updateLasers(){
 
 function init(){
     createPlayer();
+    createEnemies();
 }
 
 init();
