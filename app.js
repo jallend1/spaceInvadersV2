@@ -8,6 +8,7 @@ const laserSpeed = 5;
 const coolDown = 0.1;
 let enemyStep = 0;
 let direction = 1;
+let reverse = false;
 
 const enemyWidth = 100;
 const enemyNum = 10;
@@ -100,7 +101,6 @@ function update(){
         gameState.playerX += maxSpeed * delta;
     }
     if(gameState.spacePressed === true){
-        console.log(delta)
         createLasers(gameState.playerX, gameState.playerY, delta);
     }
     checkBoundaries();
@@ -112,17 +112,33 @@ function update(){
 }
 
 function updateEnemies(){
+    // let reverse = false;
+    for(let i = 0; i < gameState.enemies.length; i++){
+        if (gameState.enemies[i].x > (width - enemyWidth)){
+            reverse = true;
+        }else if (gameState.enemies[i].x < enemyWidth){
+            reverse = true;
+        }
+    }
+    if(reverse){
+        direction = -1;
+    }
     for(let i = 0; i < gameState.enemies.length; i++){
         gameState.enemies[i].x += direction;
     }
-    gameState.enemies.forEach(enemy => {
-        if(enemy.x > (width - enemyWidth) || enemy.x < enemyWidth){
-            direction = -direction;
-        }
-        else{
-            setPosition(enemy.$el, enemy.x, enemy.y)
-        }
-    })
+    gameState.enemies.forEach(enemy => setPosition(enemy.$el, enemy.x, enemy.y));
+
+    // gameState.enemies.forEach(enemy => {
+    //     if(enemy.x > (width - enemyWidth) || enemy.x < enemyWidth){
+    //         direction = !direction;
+    //     }
+    //     else{
+    //         for(let i = 0; i < gameState.enemies.length; i++){
+    //             gameState.enemies[i].x += direction;
+    //         }
+    //         setPosition(enemy.$el, enemy.x, enemy.y)
+    //     }
+    // })
 }
 
 function updateLasers(){
